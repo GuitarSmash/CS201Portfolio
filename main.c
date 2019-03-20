@@ -4,34 +4,66 @@
 #include <string.h>
 
 //declarations
-////////void delayStart(unsigned int);
 void welcomeScreen();
 char chooseGameMode();
-void makeBoardSize (int*, int*);
-void confirmOptions(char, int, int);
-//void makeConnectBoard (char *connectboard);
+void chooseBoardSize (int*, int*);
+char confirmOptions(char, int, int); //void
+void buildBoard(char**, int, int);
+int playerTurn(char**, int, int, int, const char*); //fix function
+int singlePlayer();
+int multiPlayer();
+int multiPlayerComputer();
+
+//---------------------------------MAIN-----------BEGIN-------------------------------------------------------------
 
 int main(int argc, char *argv[]) { //begin main
-    char gameMode;
-    int rowSize, columnSize;
-    //**board[rowSizecolumnSize];
+    //PART 1: Choose Game Options___________________________________________________________________________________
+    char gameMode; //char to choose single or multiplayer
+    char choiceConfirm; //char to confirm board and mode settings
+    const char* SHAPES = "XO"; //borrowed
+    int rowSize, columnSize; //changed dynamically in chooseBoardSize
 
-    welcomeScreen();
-    gameMode = chooseGameMode();
-    makeBoardSize(&rowSize, &columnSize);
-    confirmOptions(gameMode, rowSize, columnSize);
-    //buildBoard();//********
+    while (choiceConfirm != 'Y') { //while loop to confirm game mode options before start
+        welcomeScreen(); //welcome user
+        gameMode = chooseGameMode(); //choose game mode a, b, or c
+        chooseBoardSize(&rowSize, &columnSize); //choose board size
+        confirmOptions(gameMode, rowSize, columnSize); //confirm game mode and board size
+        choiceConfirm = confirmOptions(gameMode, rowSize, columnSize); //assign char to escape loop
+    }
+
+    //PART 2: Build The Board_______________________________________________________________________________________
+    system("clear");
+    printf("\n");
+    char** connectFourBoard;
+    buildBoard(connectFourBoard, rowSize, columnSize);
+    printf("\n");
+
+    //PART 3: Play the Game___________________________________________________________________________________
+
+    int playTurn = 0;
+    int finishGame = 0;
+
+    for (playTurn = 0; playTurn < rowSize * columnSize && !finishGame; playTurn++) {
+        //buildBoard(connectFourBoard, rowSize, columnSize); //print board
+        while (!playerTurn(connectFourBoard, playTurn % 2, rowSize, columnSize, SHAPES)) { //*******
+            buildBoard(connectFourBoard, rowSize, columnSize); //print initial board
+            puts("Cannot place piece. The column is full!\n");
+        }
+    }
+    buildBoard(connectFourBoard, rowSize, columnSize);
 
     printf("You made it to the end.");
     return 0;
 } //end
 
+//---------------------------------MAIN---END------------------------------------------------------------------------
+
 void welcomeScreen() { //begin welcomeScreen
-    printf("==========================================================================\n");
-    printf("==========================================================================\n");
-    printf("========================== Welcome to Connect 4 ==========================\n");
-    printf("==========================================================================\n");
-    printf("==============================================================V0.01=======\n\n");
+    printf("==============================================================================\n");
+    printf("==============================================================================\n");
+    printf("============================ Welcome to Connect 4 ============================\n");
+    printf("==============================================================================\n");
+    printf("==================================================================V0.01=======\n\n");
     return;
 }//end
 
@@ -54,26 +86,28 @@ char chooseGameMode() { //*******begin chooseGameMode (?) void
     return gameChoice;
 } //end
 
-void makeBoardSize(int* rowSize, int* columnSize) { //begin makeBoardSize (?) void
+void chooseBoardSize(int* rowSize, int* columnSize) { //begin makeBoardSize (?) void
     int row = 0;
     int column = 0;
 
-    printf("\n====================================================================\n");
-    printf("=========================================================================\n");
+    printf("\n==============================================================================\n");
+    printf("========================= Choose Your Board Size ========================");
+    printf("\n==============================================================================\n");
+    printf ("WARNING: Any board size smaller 4x4 will result in an impossible to win match!\n\t Also, any board size greater than 101x101 will cause a wrap \n\t around the terminal!\n\n");
     printf ("Note: The standard board size is 7x6 [7 rows, 6 columns].\n");
     printf ("Please enter a board size.\n");
 
     while (row <= 0) { //while loop for user to enter Connect 4 Row Size
-        printf ("\tNumber of rows: ");
+        printf ("\nNumber of rows: ");
         scanf ("%d", &row);
 
         if (row <= 0) {
-            printf ("\n\tEnter a valid number!! [must be greater than 0]\n");
+            printf ("\nEnter a valid number!! [must be greater than 0]\n");
         }
     }
 
     while (column <= 0) { //while loop for user to enter Connect 4 Column Size
-        printf ("\tNumber of columns: ");
+        printf ("Number of columns: ");
         scanf ("%d", &column);
 
         if (column <= 0) {
@@ -87,13 +121,11 @@ void makeBoardSize(int* rowSize, int* columnSize) { //begin makeBoardSize (?) vo
 } //end
 
 
-void confirmOptions(char gameChoice, int row, int column) { //begin confirmOptions
-    //char chooseGameMode(char gameChoice);
-    //int makeBoardSize(int rowSizer, int columnSizer);
-    system("clear");
-    printf("=========================================================================\n");
-    printf("========================= Connect 4 ================================\n");
-    printf("=========================================================================\n\n");
+char confirmOptions(char gameChoice, int row, int column) { //begin confirmOptions  VOID
+    //system("clear");
+    printf("\n==============================================================================\n");
+    printf("======================= Confirm Your Settings ==========================\n");
+    printf("==============================================================================\n\n");
 
     if (gameChoice == 'A') {
         printf("Game Mode: Singleplayer\n");
@@ -119,9 +151,82 @@ void confirmOptions(char gameChoice, int row, int column) { //begin confirmOptio
             printf("Please enter a valid character!\n");
         }
     }
-return;
+    printf("\n");
+    return confirm;
 }//end
 
-void makeBoard() {
+void buildBoard(char** connectFourBoard, int rowSize, int columnSize) {
+    int build;
+    connectFourBoard = (char **)malloc(rowSize * sizeof(int *));
+    for (build = 0; build < rowSize; build++) {
+        connectFourBoard[build] = (char *)malloc(columnSize * sizeof(int));
+    }
 
+    int xLength; //used to calculate and build rows
+    int yLength; //used to calculate and build columns
+    int count; //used to count each column
+    int label; //used to label each column
+
+    for (xLength = 0; xLength < rowSize; xLength++) {
+        for (yLength = 0; yLength < columnSize; yLength++) {
+            printf("|  %c", connectFourBoard[xLength][yLength]);
+
+        }
+        puts("|");
+        //puts("-----------------------------");
+        int line;
+        for (line = 0; line < columnSize; line++) {
+            if (line == 1) {
+                printf("-----");
+            }
+            else {
+                printf("----");
+            }
+        }
+        printf("\n");
+    }
+
+    for (label = 1; label <= columnSize; label++) { //format numbers below columns correctly
+        if (label == 1) { //if 1
+            printf("  %d", label);
+        }
+        else if (label < 10) { //if 2 to 9
+            printf("   %d", label);
+        }
+        else if (label >= 10 && label < 100) { //if 10 to 99
+            printf("  %d", label);
+        }
+        else if (label >= 100) {//if 100 onwards (numbers will become too big for the boxes once it reaches 1000...)
+            printf(" %d", label);
+        }
+    }
+    printf("\n");
+
+}
+
+int playerTurn(char** connectFourBoard, int playerTurn, int rowSize, int columnSize, const char* SHAPES) { //borrowed
+    int row = 0;
+    int column = 0;
+
+        printf("Choose a column (from 1 to %d)", columnSize);
+        printf(", Player %d [Shape: %c]: ", playerTurn + 1, SHAPES[playerTurn]);
+
+    while(1) {
+        if (1 != scanf("%d", &column) || column < 1 || column > columnSize) {
+            while(getchar() != '\n');
+            puts ("Cannot place piece. Out of bounds!");
+        }
+        else {
+            break;
+        }
+    }
+    column--;
+
+    for (row = rowSize - 1; row >= 0; row--) {
+        if(connectFourBoard[row][column] == ' ') { //*******
+            connectFourBoard[row][column] == SHAPES[playerTurn]; //******* place piece
+            return 1;
+        }
+    }
+return 0;
 }
