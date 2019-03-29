@@ -37,7 +37,7 @@ FEATURES
 - The design implements a 2D array structure to construct the board dynamically.
 - The score is tallied between consecutive matches, and it will be cleared once the user decides to stop playing the game.
 - When playing multiplayer, the loser gets to go first on the next round.
-- The computer (AI) functionality was created through a modified iterative Depth-First Search algorithm.
+- The computer (AI) functionality was created through a modified, unweighted iterative Depth-First Search algorithm.
   - The goal was to minimize runtime through linear functionality.
   - When the AI is faced with the issue of not locating a next best move, a rand function is performed to randomly choose a column to place the next piece.
 ----------------------------------------------------------------------------------------------------------------------------------------
