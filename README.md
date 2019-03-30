@@ -36,6 +36,7 @@ General Usage Notes
 - The objective is to place four X's or four O's in a row on the board, whether the order be horizontal, vertical, or diagonal.
 - The project was compiled in Ubuntu while using the Windows Subsystem for Linux.
 - The project was created for college research purposes for The University of Alabama.
+- The project was checked for memory leaks and freed through Valgrind.
 ----------------------------------------------------------------------------------------------------------------------------------------
 
 Features
