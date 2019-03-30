@@ -5,6 +5,13 @@
 #include <time.h>
 
 //GOALS: FIX DIAGONAL CHECKING AND BUFF AI
+    //The diagonal check might not be check at the top of the column (fixed)
+//FIX AI SEG FAULT******************************* (fixed????)
+//FIX AI REMOVING PIECE AT THE TOP ROW (might be fixed now)
+//GIVE ERROR MESSAGE IF COLUMN IS FULL!!!!!!!!! (might be fixed now)
+//FIX AI horizontal 4 in a row scan
+
+//THE DIAGONAL IS WRAPPING!!!!!!! (Fixed)
 
 //structures
 typedef struct pot { //structure of each hole in the board
@@ -250,8 +257,10 @@ void getCount(int* row, int* column) { //void function to get user input of dyna
     printf("\n==============================================================================\n");
     printf ("WARNING: Any board size smaller 4x4 will result in an impossible to win match!");
     printf("\n\t - Also, any arbitrarily large board will wrap around the \n\t   terminal and will cause formatting issues!\n");
-    printf("\t - Stay below 44 rows, 44 columns to avoid formatting issues!\n\n\t");
+    printf("\t - Stay below 44 rows, 44 columns to avoid formatting issues!\n\t");
+    printf("\n\t - ALSO, in multiplayer, the loser of a round will\n\t   go FIRST in the next round!!\n\n\t");
     printf ("Note: The standard board size is 6x7 [6 rows, 7 columns].\n");
+
 
     while (rowInput <= 0) { //while loop for user to enter Connect 4 Row Size
         printf ("\tEnter number of rows: ");
@@ -297,7 +306,7 @@ board* setFilled(board *board, int x, int y, int fill){
 //the function also prints the board format accordingly based on the user-input row and column sizes
 void printBoard(board *board, char gameMode, int row, int column, int playerOne, int playerTwo) { //function to print dynamic board
     int rowCount, columnCount, line, label = 0;
-    system("clear");//clear screen
+    //system("clear");//clear screen***************
     printf("==============================================================================\n");
     if (gameMode == 'A') { //if singleplayer, print singleplayer title
         printf("===== Game Mode: Singleplayer =============================================\n");
@@ -350,26 +359,13 @@ printf("\n");
 
 //char function to call aiBehavior in order for the AI to determine its next best move
 //then, once it finds an optimal blank spot, it will place its piece, and then checkForWinner will check to see if the move results in victory
-char aiTurn(board* board, int turnChange) {
-	int columnChoice = aiBehavior(board);
-	int ro;
-
-	for (ro = board->rows - 1; ro >= 0; ro--) { //for loop to check that the bottom of the board is empty, if not, move up and check again
-		//if(board->map[ro][co]->filled == 0 ) { //***
-		if (getFilled(board, ro, columnChoice) == ' ') { //is the spot at the bottom blank?
-			board = setFilled(board, ro, columnChoice, turnChange); //if so, place the player piece within the board spot
-			return checkForWinner(board, ro, columnChoice); //check to see if the player won after placing the new piece
-		}
-	}
-
-	return 0;
-}//end char
 
 char playerTurn(board* board, int turnChange) { //char function  to let player choose a column to place next piece
     int ro, co = 0; //integers to help navigate where the piece will be placed
-    printf("Choose a column (from 1 to %d)", board->cols);
-    printf(", Player %d: ", turnChange); // turnChange indicates which player goes next. Refer back to main() for modulus operation
-
+    int retry = 0;
+    while (retry != 1) {
+        printf("Choose a column (from 1 to %d)", board->cols);
+        printf(", Player %d: ", turnChange); // turnChange indicates which player goes next. Refer back to main() for modulus operation
     while(1) { //while will execute until it is broken out of
         if (1 != scanf("%d", &co) || co < 1 || co > board->cols) { //if the player does not choose a valid column on the board
             while(getchar() != '\n'); //while will check to make sure that an invalid will not crash the program
@@ -386,12 +382,37 @@ char playerTurn(board* board, int turnChange) { //char function  to let player c
     for (ro = board->rows - 1; ro >= 0; ro--) { //for loop to check that the bottom of the board is empty, if not, move up and check again
         //if(board->map[ro][co]->filled == 0 ) { //***
         if(getFilled(board, ro, co) == ' ') { //is the spot at the bottom blank?
+            retry = 1;
             board = setFilled(board, ro, co, turnChange); //if so, place the player piece within the board spot
             return checkForWinner(board, ro, co); //check to see if the player won after placing the new piece
         }
+        else if (getFilled(board, 0, co) != ' ') { //its printing off based on the amount of columns
+            printf("\nThe column is full! Choose a different column!\n");
+            //return checkForWinner(board, ro, co);
+            retry = 0;
+            break;
+        }
     }
+}
 
     return 0;
+}//end char
+
+char aiTurn(board* board, int turnChange) {
+	int columnChoice = aiBehavior(board);
+	int ro;
+
+    //*************fix checking
+
+	for (ro = board->rows - 1; ro >= 0; ro--) { //for loop to check that the bottom of the board is empty, if not, move up and check again
+		//if(board->map[ro][co]->filled == 0 ) { //***
+		if (getFilled(board, ro, columnChoice) == ' ') { //is the spot at the bottom blank?
+			board = setFilled(board, ro, columnChoice, turnChange); //if so, place the player piece within the board spot
+			return checkForWinner(board, ro, columnChoice); //check to see if the player won after placing the new piece
+		}
+	}
+
+	return 0;
 }//end char
 
 //each time the player or ai makes a move, the checkForWinner function is called to call all functions that could possibly end the game
@@ -457,7 +478,7 @@ int vertical(board* board, int column) {
     int win = 0; //win counter
     int i = 0; //iterator
 
-    for (i = 0; i < board->rows; i++) { //for when i is less than the total board's rows
+    for (i = 0; i < board->rows; i++) { //for when i is less than the total board's rows //**** SHOULD BE =
         if (board->map[i][column]->filled == 1) { //if the specific position contains 'X'
             win++; //increment win counter
             if (win >= 4) { //if 4 in a row are detected
@@ -488,91 +509,119 @@ int vertical(board* board, int column) {
 
 //int function to scan for front diagonal and back diagonals
 int diagonal(board* board) {
-    int win = 0; //win counter
+    int winFront1 = 0; //win counter
+    int winBack1 = 0;
+    int winFront2 = 0;
+    int winBack2 = 0;
     int i = 0;//iterator
     int j = 0;//iterator
+    int k = 0;
 
-//Check Front: Player 1
+//Check Front: Player 1 (Working?)
 //we compare j to board columns minus 3, because if we compare to minus 2,
 //it would be impossible to obtain a diagonal 4 in a row, because we go too far along the board
+for (k = 0; k < board->rows - 3; k++){ //for loop iterator to check diagonals above the bottom left index
     for (j = 0; j < (board->cols - 3); j++) {
-        for (i = 0; ((board->rows-i-1) >= 0) && ((i+j) < board->cols); i++) { //check front player 1
-            //printf("Checking j:%d, i:%d, map[%d][%d]\n",j,i, board->rows-i-1, i+j);
-            if (board->map[board->rows-i-1][i+j]->filled == 1) { //if the bottom-left child of placed piece is the same 'X'
-                win++; //increment
-                //printf("Win\n");
-                if (win >= 4) { //if 4 in a row, player 1 wins
-                    //printf("Winner\n");
-                    return 1;
-                    break;
-                }
-
+        for (i = 0; ((board->rows-i-k-1) >= 0) && ((i+j) < board->cols); i++) { //check front player 1 ((board->rows-i-1) >= 0)******* WORKING
+            //printf("Player 1Checking j:%d, i:%d, map[%d][%d]\n",j,i, board->rows-i-k-1, i+j);
+            if (board->map[board->rows-i-k-1][i+j]->filled == 1) { //if the bottom-left child of placed piece is the same 'X'
+            //if (board->map[board->rows-i-1][i+j]->filled == 1)
+            winFront1++; //increment
+            //printf("Win\n");
+            if (winFront1 >= 4) { //if 4 in a row, player 1 wins
+                //printf("Winner\n");
+                return 1;
+                break;
             }
-            else win = 0; //if not 4 in a row, restart counter
+            }
+            else winFront1 = 0; //if not 4 in a row, restart counter
         }
+        winFront1 = 0; //redeclare to 0.... if you dont, it will wrap to next diagonal and count is as part of the four consecutive pieces
     }//end for
+    winFront1 = 0; //redeclare to 0.... if you dont, it will wrap to next diagonal and count is as part of the four consecutive pieces****
+}
 
-    win = 0, i = 0, j = 0; //reinitialize
+winFront1 = 0, winBack1 = 0, winFront2 = 0, winBack2 = 0, i = 0, j = 0, k = 0; //reinitialize
 
-    //Check Back: Player 1
-    //start the scan from the end!!!!!!!!!
+//Check Back: Player 1
+//start the scan from the end!!!!!!!!!
+for (k = 0; k < board->rows - 3; k++){ //for loop iterator to check diagonals above the bottom left index
     for (j = 0; j < (board->cols - 3); j++) { //see previous loop for logic
-        for (i = 0; ((board->rows-i-1) >= 0) && ((i+j) < board->cols); i++) { //check back player 1
-            //printf("Checking j:%d, i:%d, map[%d][%d]\n",j,i, board->rows-i-1, board->cols-i-j-1);
-            if (board->map[board->rows-i-1][board->cols-i-j-1]->filled == 1) { //check if bottom-right child of placed piece is the same 'X'
-                win++;
-                //printf("Win\n");
-                if (win >= 4) {
-                    //printf("Winner\n");
-                    return 1;
-                    break;
-                }
-
+        for (i = 0; ((board->rows-i-k-1) >= 0) && ((i+j) < board->cols); i++) { //check back player 1 ((board->rows-i-1) >= 0)******* NOT WORKING
+            //printf("Checking j:%d, i:%d, map[%d][%d]\n",j,i, board->rows-i-k-1, board->cols-i-j-1);
+            //    if (board->rows-i-1 = 0 && i+j = (board->cols-i-j-1 = )) {
+            //        winFront1 = 0;
+            //    }
+            if (board->map[board->rows-i-k-1][board->cols-i-j-1]->filled == 1) { //check if bottom-right child of placed piece is the same 'X'
+            winBack1++;
+            //printf("Win\n");
+            if (winBack1 >= 4) {
+                //printf("Winner\n");
+                return 1;
+                break;
             }
-            else win = 0; //restart counter
+
         }
-    }//end for
+        else winBack1 = 0; //restart counter
+    }
+    winBack1 = 0;//redeclare to 0.... if you dont, it will wrap to next diagonal and count is as part of the four consecutive pieces
+}//end for
+winBack1 = 0; //redeclare to 0.... if you dont, it will wrap to next diagonal and count is as part of the four consecutive pieces***
+}//end outermost for
 
-    win = 0, i = 0, j = 0; //reinitialize
+    winFront1 = 0, winBack1 = 0, winFront2 = 0, winBack2 = 0, i = 0, j = 0; //reinitialize
 
-    //Check Front: Player 2
-    //see logic of player 1 front check, the only difference is that the if conditional is check for "== 2", or 'O'
+    //Check Front: Player 2 (Working?)
+    //see logic of player 1 front check, the only difference is that the if conditional is check for "== 2", or 'O' //notworking
+    for (k = 0; k < board->rows - 3; k++){ //for loop iterator to check diagonals above the bottom left index
     for (j = 0; j < (board->cols - 3); j++) {
-        for (i = 0; ((board->rows-i-1) >= 0) && ((i+j) < board->cols); i++) { //check front player 2
-            //printf("Checking j:%d, i:%d, map[%d][%d]\n",j,i, board->rows-i-1, i+j);
-            if (board->map[board->rows-i-1][i+j]->filled == 2) {
-                win++;
+        for (i = 0; ((board->rows-i-k-1) >= 0) && ((i+j) < board->cols); i++) { //check front player 2 ((board->rows-i-1) >= 0)******* < board->cols - 1
+            //printf("Player2Checking j:%d, i:%d, map[%d][%d]\n",j,i, board->rows-i-1, i+j);
+            if (board->map[board->rows-i-k-1][i+j]->filled == 2) {
+                winFront2++;
                 //printf("Win\n");
-                if (win >= 4) {
+                if (winFront2 >= 4) {
                     //printf("Winner\n");
                     return 2;
                     break;
                 }
 
             }
-            else win = 0;
+            else winFront2 = 0;
         }
+        winFront2 = 0;//redeclare to 0.... if you dont, it will wrap to next diagonal and count is as part of the four consecutive pieces
     }//end for
-    win = 0, i = 0, j = 0; //reinitialize
+    winFront2 = 0;//redeclare to 0.... if you dont, it will wrap to next diagonal and count is as part of the four consecutive pieces****
+}
 
-    //Check back: Player 2
+    winFront1 = 0, winBack1 = 0, winFront2 = 0, winBack2 = 0, i = 0, j = 0,k = 0; //reinitialize
+
+    //Check back: Player 2 (Working?)
     //see logic of player 1 back check, the only difference is that the if conditional is check for "== 2", or 'O'
+
+    for (k = 0; k < board->rows - 3; k++){ //for loop iterator to check diagonals above the bottom left index
     for (j = 0; j < (board->cols - 3); j++) {
-        for (i = 0; ((board->rows-i-1) >= 0) && ((i+j) < board->cols); i++) { //check back player 2
+        for (i = 0; ((board->rows-i-k-1) >= 0) && ((i+j) < board->cols); i++) { //check back player 2 ((board->rows-i-1) >= 0)*******
             //printf("Checking j:%d, i:%d, map[%d][%d]\n",j,i, board->rows-i-1, board->cols-i-j-1);
-            if (board->map[board->rows-i-1][board->cols-i-j-1]->filled == 2) {
-                win++;
+            if (board->map[board->rows-i-k-1][board->cols-i-j-1]->filled == 2) {
+                winBack2++;
                 //printf("Win\n");
-                if (win >= 4) {
+                if (winBack2 >= 4) {
                     //printf("Winner\n");
                     return 2;
                     break;
                 }
-
             }
-            else win = 0;
+            else winBack2 = 0;
         }
+        winBack2 = 0;//redeclare to 0.... if you dont, it will wrap to next diagonal and count is as part of the four consecutive pieces
     }//end for
+    winBack2 = 0;//redeclare to 0.... if you dont, it will wrap to next diagonal and count is as part of the four consecutive pieces*******
+}
+
+    winFront1 = 0, winBack1 = 0, winFront2 = 0, winBack2 = 0, i = 0, j = 0; //reinitialize
+
+
     return 0;
 } //end int
 
@@ -634,26 +683,31 @@ int aiBehavior(board* board) {
     int i = 0; //iterator for rows
     pot* piece; //pot containing the structure attributes of each hole in the board
     int c = 0;//replaces longest streak if bigger
-	int j; //iterator for cols
+	int j = 0; //iterator for cols
+    int k = 0; //iterator for neighbor pointers
+    int p = 0;
 
 	for (j = 0; j < board->cols; j++) {
 		for (i = 0; i < board->rows; i++) { //search a column, and go down until you find the first filled piece
-			if (board->map[i][j]->filled == 1 || board->map[i][j]->filled == 2) { //if the first piece found is X or O
+			if (board->map[i][j]->filled == 1){// || board->map[i][j]->filled == 2) { //if the first piece found is X or O
 				break;
 			}
 		}
 
 		if (i == board->rows) continue; //if i becomes equivalent to the total number of rows, continue
 
-		int p = board->map[i][j]->filled; //p contains the integer value of filled state (0 if ' ', 1 if 'X', 2 if 'O')
+		p = board->map[i][j]->filled; //p contains the integer value of filled state (0 if ' ', 1 if 'X', 2 if 'O')
 		if (p == 2) { //if P is 'O'
-			for (int k = 0; k < 5; k++) { //iterate k and assign the children neighbors
+			for (k = 0; k < 5; k++) { //iterate k and assign the children neighbors
 				piece = board->map[i][j]->neighbor[k]; //j is a pot pointer
 				if (piece == NULL) continue;
 				if (piece->filled == 2) {
 					c = 1;
 					c4IterativeDFS(piece, k, &c); //pot* piece, k, &c
-					if (board->map[0][j]->filled = 0) {
+                    if (board->map[0][j]->filled != 0) {//************************
+                        c4IterativeDFS(piece, k, &c);
+                    }//***********************************************
+					else if (board->map[0][j]->filled == 0) { //**** = 0
 						if (c > nbm) {
 							nbm = c; //c replaces next best move
 							if (k == 0 || k == 1) nbm_column = (j == board->cols - 1) ? j : j + 1; //left and bottom left children
@@ -666,13 +720,16 @@ int aiBehavior(board* board) {
 
 			if (i != 0) {
 				pot* prev = board->map[i - 1][j];
-				for (int k = 0; k < 5; k++) {
+				for (k = 0; k < 5; k++) {
 					piece = prev->neighbor[k];
 					if (piece == NULL) continue;
 					if (piece->filled == 2) {
 						c = 1;
 						c4IterativeDFS(piece, k, &c);
-						if (board->map[0][j]->filled = 0) {
+                        if (board->map[0][j]->filled != 0) {//************************
+                            c4IterativeDFS(piece, k, &c);
+                        }//***********************************************
+						else if (board->map[0][j]->filled == 0) { //****** = 0
 							if (c > nbm) {
 								nbm = c;
 								if (k == 0 || k == 1) nbm_column = (j == board->cols - 1) ? j : j + 1;
