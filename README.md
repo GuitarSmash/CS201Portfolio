@@ -19,12 +19,18 @@ Sources
   - https://en.wikipedia.org/wiki/Depth-first_search
 ----------------------------------------------------------------------------------------------------------------------------------------
 
-VIDEO TUTORIAL
+Video Tutorial
 ----------------------------------------------------------------------------------------------------------------------------------------
 - https://youtu.be/rgBT7dbH3nc
 ----------------------------------------------------------------------------------------------------------------------------------------
 
-GENERAL USAGE NOTES
+Instructions
+----------------------------------------------------------------------------------------------------------------------------------------
+- When you locate the source folder, type "make" to create the executable.
+- Next, type "./201" to launch the executable.
+----------------------------------------------------------------------------------------------------------------------------------------
+
+General Usage Notes
 ----------------------------------------------------------------------------------------------------------------------------------------
 - Connect Four is a board game for up to 1 to 2 players. The game poses two opponents to alternately place shapes, either an 'X' or an 'O', within a board. Player 1 controls 'X', and Player 2 controls 'O'.
 - The objective is to place four X's or four O's in a row on the board, whether the order be horizontal, vertical, or diagonal.
@@ -32,7 +38,7 @@ GENERAL USAGE NOTES
 - The project was created for college research purposes for The University of Alabama.
 ----------------------------------------------------------------------------------------------------------------------------------------
 
-FEATURES
+Features
 ----------------------------------------------------------------------------------------------------------------------------------------
 - ASCII Interface
 - Three game modes:
