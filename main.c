@@ -4,15 +4,6 @@
 #include <string.h>
 #include <time.h>
 
-//GOALS: FIX DIAGONAL CHECKING AND BUFF AI
-//The diagonal check might not be check at the top of the column (fixed)
-//FIX AI SEG FAULT******************************* (fixed????)
-//FIX AI REMOVING PIECE AT THE TOP ROW (might be fixed now)
-//GIVE ERROR MESSAGE IF COLUMN IS FULL!!!!!!!!! (might be fixed now)
-//FIX AI horizontal 4 in a row scan
-
-//THE DIAGONAL IS WRAPPING!!!!!!! (Fixed)
-
 //structures
 typedef struct pot { //structure of each hole in the board
     int x; //horizontal location of the pot
@@ -59,10 +50,8 @@ int horizontal(board*, int);
 int vertical(board*, int);
 int diagonal(board*);
 int tieGame(board*);
-int scoring(board*, int, int);
-int aiBehavior(board*);
 char rematchGame(int);
-int c4DFS(int);
+int aiBehavior(board*);
 void c4IterativeDFS(pot*, int, int*);
 
 
@@ -269,8 +258,8 @@ void getCount(int* row, int* column) { //void function to get user input of dyna
 
         if (rowInput <= 0) {
             printf ("\n\tEnter a valid number!! [must be greater than 0]\n");
-        }
-    }
+        }//end if
+    }//end while
 
     while (columnInput <= 0) { //while loop for user to enter Connect 4 Column Size
         printf ("\tEnter number of columns: ");
@@ -279,8 +268,8 @@ void getCount(int* row, int* column) { //void function to get user input of dyna
 
         if (columnInput <= 0) {
             printf ("\n\tEnter a valid number!! [must be greater than 0]\n");
-        }
-    }
+        }//end if
+    }//end while
     printf("\n");
     *row = rowInput; //assign integer input to parameter pointer
     *column = columnInput; //assign integer input to parameter pointer
@@ -306,17 +295,17 @@ board* setFilled(board *board, int x, int y, int fill){
 //the function also prints the board format accordingly based on the user-input row and column sizes
 void printBoard(board *board, char gameMode, int row, int column, int playerOne, int playerTwo) { //function to print dynamic board
     int rowCount, columnCount, line, label = 0;
-    //system("clear");//clear screen***************
+    system("clear");//clear screen***************
     printf("==============================================================================\n");
     if (gameMode == 'A') { //if singleplayer, print singleplayer title
         printf("===== Game Mode: Singleplayer =============================================\n");
-    }
+    }//end if
     else if (gameMode == 'B') { //if multiplayer (human), print multiplayer (human) title
         printf("===== Game Mode: Multiplayer (Human) ======================================\n");
-    }
+    }//end else if
     else if (gameMode == 'C') { //if multiplayer (computer), print multiplayer (computer) title
         printf("===== Game Mode: Multiplayer (Computer) ===================================\n");
-    }
+    }//end else if
     printf("===== Board size: %d rows, %d columns =======================================\n", row, column);
     printf("===== Scoreboard (Player 1: [%d], Player 2: [%d]) ===========================\n", playerOne, playerTwo);
     printf("==============================================================================\n\n"); //ui printing
@@ -324,37 +313,37 @@ void printBoard(board *board, char gameMode, int row, int column, int playerOne,
     //Note: The print design was initally inspired from an external source, but the board had to be configured to work with a 2D array structure rather than a singular array
     //Source: https://codereview.stackexchange.com/questions/27446/connect-four-game
     for (rowCount = 0 ; rowCount < board->rows; rowCount++) { //for rowCount is less than the actual board's rows
-    for (columnCount = 0 ; columnCount < board->cols; columnCount++) { //for columnCount is less than the acutal board's columns
-    printf("|"); //print divider separating the pieces
-    printf(" %c ", getFilled(board, rowCount, columnCount)); //print blank character pieces initally
-}
-puts("|"); //print last divider on the row
-for (line = 0; line < board->cols; line++) { //for line less than board's actual column count, line will format the lining between each row
-if (line == 1) {
-    printf("-----");
-}
-else {
-    printf("----");
-}
-}
-printf("\n");
-}
+        for (columnCount = 0 ; columnCount < board->cols; columnCount++) { //for columnCount is less than the acutal board's columns
+            printf("|"); //print divider separating the pieces
+            printf(" %c ", getFilled(board, rowCount, columnCount)); //print blank character pieces initally
+        }//end inner for
+        puts("|"); //print last divider on the row
+        for (line = 0; line < board->cols; line++) { //for line less than board's actual column count, line will format the lining between each row
+            if (line == 1) {
+                printf("-----");
+            } //end if
+            else {
+                printf("----");
+            } //end else
+        }//end inner for
+        printf("\n");
+    }//end outer for
 
-for (label = 1; label <= board->cols; label++) { //for loop to format numbers below columns correctly
-    if (label == 1) { //if 1
-        printf("  %d", label);
-    }
-    else if (label < 10) { //if 2 to 9
-        printf("   %d", label);
-    }
-    else if (label >= 10 && label < 100) { //if 10 to 99
-        printf("  %d", label);
-    }
-    else if (label >= 100) {//if 100 onwards (numbers will become too big for the boxes once it reaches 1000...)
-        printf(" %d", label);
-    }
-} //end for
-printf("\n");
+    for (label = 1; label <= board->cols; label++) { //for loop to format numbers below columns correctly
+        if (label == 1) { //if 1
+            printf("  %d", label);
+        }//end if
+        else if (label < 10) { //if 2 to 9
+            printf("   %d", label);
+        }//end else if
+        else if (label >= 10 && label < 100) { //if 10 to 99
+            printf("  %d", label);
+        }//end else if
+        else if (label >= 100) {//if 100 onwards (numbers will become too big for the boxes once it reaches 1000...)
+            printf(" %d", label);
+        }//end else if
+    } //end for
+    printf("\n");
 } //end void
 
 //char function to call aiBehavior in order for the AI to determine its next best move
@@ -372,11 +361,11 @@ char playerTurn(board* board, int turnChange) { //char function  to let player c
                 puts ("\nCannot place piece. Out of bounds!");
                 printf("Choose a column (from 1 to %d)", board->cols);//board->cols == total number of columns
                 printf(", Player %d: ", turnChange); //error message to prompt user to choose a correct column
-            }
+            }//end if
             else { //if the player chooses a valid column, escape the while loop
                 break;
-            }
-        }
+            }//end else
+        }//end inner while
         co--; //decrement because the count technically starts from 0, not 1
 
         for (ro = board->rows - 1; ro >= 0; ro--) { //for loop to check that the bottom of the board is empty, if not, move up and check again
@@ -385,15 +374,15 @@ char playerTurn(board* board, int turnChange) { //char function  to let player c
                 retry = 1;
                 board = setFilled(board, ro, co, turnChange); //if so, place the player piece within the board spot
                 return checkForWinner(board, ro, co); //check to see if the player won after placing the new piece
-            }
+            }//end if
             else if (getFilled(board, 0, co) != ' ') { //its printing off based on the amount of columns
                 printf("\nThe column is full! Choose a different column!\n");
                 //return checkForWinner(board, ro, co);
                 retry = 0;
                 break;
-            }
-        }
-    }
+            }//end else if
+        }//end for
+    }//end while
 
     return 0;
 }//end char
@@ -401,7 +390,6 @@ char playerTurn(board* board, int turnChange) { //char function  to let player c
 char aiTurn(board* board, int turnChange) {
     int columnChoice = aiBehavior(board);
     int ro;
-
     //*************fix checking
 
     for (ro = board->rows - 1; ro >= 0; ro--) { //for loop to check that the bottom of the board is empty, if not, move up and check again
@@ -409,8 +397,8 @@ char aiTurn(board* board, int turnChange) {
         if (getFilled(board, ro, columnChoice) == ' ') { //is the spot at the bottom blank?
             board = setFilled(board, ro, columnChoice, turnChange); //if so, place the player piece within the board spot
             return checkForWinner(board, ro, columnChoice); //check to see if the player won after placing the new piece
-        }
-    }
+        }//end if
+    }//end for
 
     return 0;
 }//end char
@@ -431,12 +419,12 @@ void declareWinner(int which, board *board, int playerOneScore, int playerTwoSco
         printf("===== Congrats! Player %d has won! ========================================\n", which);
         printf("==============================================================================\n");
         printf("Current scores:\n\tPlayer One: %d\n\tPlayer Two: %d\n\n", playerOneScore, playerTwoScore);
-    }
+    }//end if
     else if (which == 3) { //if neither player wins by filling up the board
         printf("The game is a tie! No winner!\n");
-    }
+    }//end else if
     freeBoard(board); //free memory used by the board when the game ends
-}
+}//end void
 
 //int function to scan the board for four of the same character in a row consecutively, ends game if true for, == 1 (X), == 2 (O)
 int horizontal(board* board, int row) {
@@ -449,17 +437,52 @@ int horizontal(board* board, int row) {
             if (win >= 4) { //if 4 in a row is achieved
                 return 1;//return player 1 victory
                 break;
-            }
-        }
+            }//end inner if
+        }//end outer if
         else {//if not 4 in a row, reset counter
             win = 0;
-        }
-    }
+        }//end else
+    }//end for
 
     win = 0, i = 0; //reinitialize counter and iterator
 
     for (i = 0; i < board->cols; i++) { //see previous loop, but only difference is that it is a check for 4 in a row for P2 (O)
         if (board->map[row][i]->filled == 2) { //check player two
+            win++;
+            if (win >= 4) {
+                return 2;
+                break;
+            }//end inner if
+        }//end outer if
+        else {
+            win = 0;
+        }//end else
+    }//end for
+    return 0;
+}//end int
+
+//int function to scan the board for four of the same character in a column consecutively, ends game if true for, == 1 (X), == 2 (O)
+int vertical(board* board, int column) {
+    int win = 0; //win counter
+    int i = 0; //iterator
+
+    for (i = 0; i < board->rows; i++) { //for when i is less than the total board's rows //**** SHOULD BE =
+        if (board->map[i][column]->filled == 1) { //if the specific position contains 'X'
+            win++; //increment win counter
+            if (win >= 4) { //if 4 in a row are detected
+                return 1; //player 1 wins
+                break;
+            }//end inner if
+        }//end outer if
+        else {
+            win = 0; //if there is not 4 in a row, reset counter to 0
+        }//end else
+    }//end for//
+
+    win = 0, i = 0; //reinitialize
+
+    for (i = 0; i < board->rows; i++) { //see previous loop, but only difference is that it is a check for 4 in a row for P2 (O)
+        if (board->map[i][column]->filled == 2) { //check player two
             win++;
             if (win >= 4) {
                 return 2;
@@ -470,40 +493,6 @@ int horizontal(board* board, int row) {
             win = 0;
         }
     }
-    return 0;
-}//end int
-
-//int function to scan the board for four of the same character in a column consecutively, ends game if true for, == 1 (X), == 2 (O)
-int vertical(board* board, int column) {
-    int win = 0; //win counter
-    int i = 0; //iterator
-
-    for (i = 0; i < board->rows; i++) { //for when i is less than the total board's rows //**** SHOULD BE =
-    if (board->map[i][column]->filled == 1) { //if the specific position contains 'X'
-    win++; //increment win counter
-    if (win >= 4) { //if 4 in a row are detected
-        return 1; //player 1 wins
-        break;
-    }
-}
-else {
-    win = 0; //if there is not 4 in a row, reset counter to 0
-}
-}
-win = 0, i = 0; //reinitialize
-
-for (i = 0; i < board->rows; i++) { //see previous loop, but only difference is that it is a check for 4 in a row for P2 (O)
-    if (board->map[i][column]->filled == 2) { //check player two
-        win++;
-        if (win >= 4) {
-            return 2;
-            break;
-        }
-    }
-    else {
-        win = 0;
-    }
-}
 return 0;
 }//end int
 
@@ -728,13 +717,14 @@ char rematchGame(int returning) {
 }//end char
 
 //int function to determine the AI behavior.
+//The depth first seach takes place here... based on the "->filled" operation and the "indice of the board" serving as the depth search
 //the function collaborates with the iterative DFS function to determine what is the next best move based on --
 //the pointer attributes of the current piece and the previous piece placed
 int aiBehavior(board* board) {
     //LAST THING: Let AI check horizontal and vertical pieces, iterative, check last piece placed
     //row and column will be used to pinpoint where the piece is placed, and then we will evaluate its neighbor (children)
 
-    int nbm = 0; //next best move
+    //int nbm = 0; //next best move
     int nbm_column = -1; //next best move column
     int i = 0; //iterator for rows
     pot* piece; //pot containing the structure attributes of each hole in the board
@@ -744,70 +734,73 @@ int aiBehavior(board* board) {
     int p = 0;
 
     for (j = 0; j < board->cols; j++) { //for when j is less than the board's column size
-    for (i = 0; i < board->rows; i++) { //search a column, and go down until you find the first filled piece
-        if (board->map[i][j]->filled == 1){// || board->map[i][j]->filled == 2) { //if the first piece found is X or O******** causes seg fault
-            break;
-        }
-    }
+        for (i = 0; i < board->rows; i++) { //search a column, and go down until you find the first filled piece
+            if (board->map[i][j]->filled == 1 || board->map[i][j]->filled == 2) { //if the first piece found is X or O******** causes seg fault
+                break;
+            }//end if
+        }//end for
 
-    if (i == board->rows) continue; //if i becomes equivalent to the total number of rows, continue
+        if (i == board->rows) continue; //if i becomes equivalent to the total number of rows, continue
 
-    p = board->map[i][j]->filled; //p contains the integer value of filled state (0 if ' ', 1 if 'X', 2 if 'O')
-    if (p == 2) { //if P is 'O'
-    for (k = 0; k < 5; k++) { //iterate k and assign the children neighbors
-        piece = board->map[i][j]->neighbor[k]; //j is a pot pointer
-        if (piece == NULL) continue;
-        if (piece->filled == 2) {
-            c = 1;
-            c4IterativeDFS(piece, k, &c); //pot* piece, k, &c
-            if (board->map[0][j]->filled != 0) {//************************
-                c4IterativeDFS(piece, k, &c);
-            }//***********************************************
-            else if (board->map[0][j]->filled == 0) { //**** = 0
-                if (c > nbm) {
-                    nbm = c; //c replaces next best move
-                    if (k == 0 || k == 1) nbm_column = (j == board->cols - 1) ? j : j + 1; //left and bottom left children
-                    else if (k == 2) nbm_column = j; //bottom child
-                    else nbm_column = (j == 0) ? j : j - 1; //thus, the next best column is updated, bottom right and right child
-                } //end innest if
-            }
-        }
-    } //end inner for
+        /*
+        p = board->map[i][j]->filled; //p contains the integer value of filled state (0 if ' ', 1 if 'X', 2 if 'O')
+        if (p == 2) { //if P is 'O'
+        for (k = 0; k < 5; k++) { //iterate k and assign the children neighbors
+            piece = board->map[i][j]->neighbor[k]; //piece is a pot pointer
+            if (piece == NULL) continue; //BASE CASE check
+                if (piece->filled == 2) { //if piece is populated by 'O'
+                    c = 1;
+                    c4IterativeDFS(piece, k, &c); //pot* piece, k, &c
+                    if (board->map[0][j]->filled != 0) {//if top of the column is populated by 'X' or 'O'
+                        c4IterativeDFS(piece, k, &c);//iterate
+                    }//end if
+                    else if (board->map[0][j]->filled == 0) { // if top of the column is not populated
+                        if (c > nbm) { //if c is greater than nbm
+                            nbm = c; //c replaces next best move
+                            if (k == 0 || k == 1) nbm_column = (j == board->cols - 1) ? j : j + 1; //left and bottom left children
+                            else if (k == 2) nbm_column = j; //bottom child
+                            else nbm_column = (j == 0) ? j : j - 1; //thus, the next best column is updated, bottom right and right child
+                        } //end innest if
+                    }//end else if
+                }//end if
+            } //end inner for
 
-    if (i != 0) { //previou
-        pot* prev = board->map[i - 1][j];
-        for (k = 0; k < 5; k++) {
-            piece = prev->neighbor[k];
-            if (piece == NULL) continue;
-            if (piece->filled == 2) {
-                c = 1;
-                c4IterativeDFS(piece, k, &c);
-                if (board->map[0][j]->filled != 0) {//************************
-                    c4IterativeDFS(piece, k, &c);
-                }//***********************************************
-                else if (board->map[0][j]->filled == 0) { //****** = 0
-                    if (c > nbm) {
-                        nbm = c;
-                        if (k == 0 || k == 1) nbm_column = (j == board->cols - 1) ? j : j + 1;
-                        else if (k == 2) nbm_column = j;
-                        else nbm_column = (j == 0) ? j : j - 1; //thus, the next best column is updated
-                    }
-                }
-            }
-        }
-    }
-}//end middle if
-} //end inner if
+            if (i != 0) { //previou
+                pot* prev = board->map[i - 1][j];
+                for (k = 0; k < 5; k++) {
+                    piece = prev->neighbor[k];
+                    if (piece == NULL) continue;
+                    if (piece->filled == 2) {
+                        c = 1;
+                        c4IterativeDFS(piece, k, &c);
+                        if (board->map[0][j]->filled != 0) {//TEST BELOW HERE
+                            c4IterativeDFS(piece, k, &c);
+                        }//TEST ABOVE HERE
+                        else if (board->map[0][j]->filled == 0) { // ORIGINALLY == 0
+                            if (c > nbm) {
+                                nbm = c;
+                                if (k == 0 || k == 1) nbm_column = (j == board->cols - 1) ? j : j + 1; // if j is equal to the board columns, place at last column
+                                else if (k == 2) nbm_column = j;
+                                else nbm_column = (j == 0) ? j : j - 1; //thus, the next best column is updated
+                            }//end if
+                        }//end else if
+                    }//end if
+                }//end for
+            }//end if
+        }//end outer if*/
 
-if (nbm_column == -1) {//if a next best move cannot be located, we will randomize the column selection to allow it to continue functioning
-    nbm_column = rand() % board->cols; //
-    while (board->map[0][nbm_column]->filled != 0) { //while loop to make sure the AI is not placing in a full column
-        nbm_column = rand() % board->cols; //if the column is full, randomly select a new column
-    }
-}
+    } //end outer  for
+
+    if (nbm_column == -1) {//if a next best move cannot be located, we will randomize the column selection to allow it to continue functioning
+        nbm_column = rand() % board->cols; //if nbm is not calculated, a random column is selected
+        while (board->map[0][nbm_column]->filled != 0) { //while loop to make sure the AI is not placing in a full column
+            nbm_column = rand() % board->cols; //if the column is full, randomly select a new column
+        }//end while
+    }//end if
 return nbm_column; //return next best move column
 //play at saved column
 }//end int function//
+
 
 //DFS Pseudocode Source of Inspiration: https://en.wikipedia.org/wiki/Depth-first_search
 
@@ -817,7 +810,7 @@ void c4IterativeDFS(pot* piece, int j, int* c) { //seg fault reading in j and c
     pot* child = piece->neighbor[j]; //from the perspective of the placed piece's neighbor, we will determine if it the shapes match.
 
     if (piece->filled == 2) { //if the piece is 'O'
-    *(c) = *(c)+1; //iterate ****
-    c4IterativeDFS(child, j, c); //rerun the iterative process
-}
+        *(c) = *(c)+1; //iterate ****
+        c4IterativeDFS(child, j, c); //rerun the iterative process
+    } //end if
 }//end void
