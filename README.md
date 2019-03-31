@@ -7,7 +7,7 @@
 
 GitHub
 ----------------------------------------------------------------------------------------------------------------------------------------
-- GuitarSmash (ID: 46014495): https://github.com/GuitarSmash
+- GuitarSmash: https://github.com/GuitarSmash
 - Connect Four Portfolio Link: https://github.com/GuitarSmash/CS201Portfolio
 ----------------------------------------------------------------------------------------------------------------------------------------
 
